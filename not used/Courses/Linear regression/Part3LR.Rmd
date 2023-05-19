@@ -1,0 +1,80 @@
+---
+title: "Linear Regression"
+author: "Part 3"
+output: pdf_document
+---
+
+##### The aim of this course is to give you most of the information you need to understand Linear regressions, as well as give you all tools necessary to put it in place. We will focus on the intuition of how it works without ignoring the maths beyond. Each part ends with several exercices to do. Some of them are very easy and other harder. I highly recommend to verify all demonstration presents during the course, for 2 main reasons: verify there is no mistake and help you to understand the objects manipulated. I truly believe that equations manipulation is very helpful in order to have a good intuition of why they are the way they are.
+
+<br>
+<br>
+
+> *“Statistics is about reducing the amount of data.”* **R. Fisher**
+
+<br>
+
+### Part 3 - Statistical tests for linear regression
+
+
+<br>
+
+#### What is a statistical test?
+
+I asked chatGPT *"Give me an intuitive way to explain what a statistical test is"* and its answer was really relevant:
+\
+
+*"A statistical test is a procedure used to determine whether there is a significant difference between two or more groups or whether a relationship exists between two variables. It is a way to use statistical evidence to draw conclusions about a population based on a sample.* 
+
+*Imagine that you are interested in whether a new teaching method is more effective than the current method at a particular school. You decide to conduct a study by randomly selecting a group of students to receive the new method and another group to continue with the current method. At the end of the study, you compare the test scores of the two groups to see if there is a significant difference between them. This is an example of a statistical test.*
+
+*In this case, the null hypothesis would be that there is no difference between the two methods, and the alternative hypothesis would be that the new method is more effective. The statistical test would help you decide whether to reject the null hypothesis in favor of the alternative hypothesis, based on the statistical evidence. In general, statistical tests involve collecting data, analyzing the data using statistical techniques, and interpreting the results to make conclusions about the population of interest."*
+
+If you never heard about statistical tests, p-value or significance, **I highly recommend you to watch this video first** ([click here](https://www.youtube.com/watch?v=I10q6fjPxJ0)).
+
+<br>
+<br>
+
+#### Main tests
+
+There are lots of tests possible to consider when doing linear regression. It's impossible to see them all here because there are too many. However, in this course we will see the most important and most used ones. 
+
+Let's start with the ***Student's test***: the most used in statistics with Chi-square test probably. It allows us to compare 2 numbers and check if they are statistically significantly different from each other. More concretely, assuming they are not different, we compute the probability of observing the current values of the number. 
+
+<br>
+<br>
+
+#### Non-linear relationship 
+
+
+
+<br>
+<br>
+
+#### Diagnostic tests
+
+
+
+
+
+<br>
+<br>
+
+#### Exercises
+
+> 1.
+
+
+> 2.
+
+
+
+
+
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>

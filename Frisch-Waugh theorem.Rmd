@@ -1,0 +1,209 @@
+---
+title: "Frisch-Waugh-Lovell theorem"
+output: pdf_document
+---
+
+# Brief description
+
+The Frisch–Waugh–Lovell (FWL) theorem allows us to reduce a multivariate regression analysis to an univariate one. The main idea behind is the fact that there are mutliple ways to estimate a $\beta_1$ coefficient in the following regression model: $y_i = \beta_1x_i^1 + \beta_2x_i^2 + \varepsilon_i$. The main idea behind this is to use the residuals of the regression of $x^1$ on $x^2$ as the regressor of $y$. 
+
+# Let's see it in practice
+
+In order to give the intuition of what's going on, we will start with a concrete example:
+
+```{r echo=TRUE, message=FALSE, warning=FALSE, fig.width=10}
+#create the data
+set.seed(100)
+n = 500
+x1 = rnorm(n=n, sd=25)
+x2 = -3*x1 + rnorm(n=n, sd=25)
+y = -2*x1 + 3*x2 + rnorm(n=n, sd=25)
+data = data.frame(x1,x2,y)
+```
+
+```{r echo=FALSE, fig.width=10, message=FALSE, warning=FALSE}
+library(ggplot2)
+library(ggpubr)
+
+#plot the relationship between variables
+plot1 = ggplot(data=data, aes(x=x1, y=y)) + geom_point(col="red") + ggtitle("Relationship between x1 and y")
+plot2 = ggplot(data=data, aes(x=x2, y=y)) + geom_point(col="blue") + ggtitle("Relationship between x2 and y")
+plot3 = ggplot(data=data, aes(x=x1, y=x2)) + geom_point(col="green") + ggtitle("Relationship between x1 and x2")
+ggarrange(plot1, plot2, plot3, ncol = 3)
+```
+
+We clearly see here that all of our variables are correlated. Now, let's say we want to make a linear regression with $y$ as a predicted variable and check the estimated coefficients. 
+
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+attach(data)
+regression = lm(y ~ x1 + x2)
+regression$coefficients
+```
+
+For the moment, our estimation seems to go well since the estimated coefficients are near the true value. We said before that the FWL theorem allows us to go from a multivariate regression to an univariate one. What does it mean? You probably know that adding or removing variable to a regression has an impact on the other coefficients. If you're not fully clear with that idea, I encourage you to try to compare these models, especially the $\hat\beta_1$ coefficient: $\hat y = \hat\beta_1x^1$ and $\hat y = \hat\beta_1x^1 + \hat\beta_2x^2$.
+
+You might say that how is it possible to reduce multivariate regression to an univariate one since adding or removing variable has an impact on the estimation. The answer is the FWL theorem!  
+
+**The theorem says that all of these are equivalent for estimate $\beta_1$:**\
+(1) Estimation by regressing $y$ on $x1$ and $x2$ \
+(2) Estimation by regressing $y$ on the residual from the regression of $x1$ on $x2$, generally called *orthogonalization* or *residualization* \
+(3) Estimation by regressing the residual from the regression of $y$ on $x2$ on the residual from the regression of $x1$ on $x2$
+
+Ok I know it's not fully clear, let's see an example.
+
+\
+
+**Let's compute for the (1) method:** 
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+#compute beta from regressing y on x1 and x2
+regression = lm(y ~ x1 + x2)
+regression$coefficients
+```
+
+Nothing new here. We have the same $\hat\beta_1$ as before.
+
+\
+
+**Now let's compute with the (2) method (*orthogonalization*):**
+
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+#compute the residuals of regressing x1 on x2
+first_reg = lm(x1 ~ x2)
+residuals = first_reg$residuals
+
+#compute beta from regressing y on the residuals from above
+second_reg = lm(y ~ residuals)
+second_reg$coefficients
+```
+
+As you can see, we have the exact same value as before with $\hat\beta_1$! Obviously, there is no chance here, but let's see the last method.
+
+\
+
+**And finally, the (3) method:**
+
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+#compute residuals of regressing y on x2
+first_reg = lm(y ~ x2)
+residuals1 = first_reg$residuals
+
+#compute the residuals of regressing x1 on x2
+second_reg = lm(x1 ~ x2)
+residuals2 = second_reg$residuals
+
+#compute beta from regressing the residuals_1 on residuals_2
+last_reg = lm(residuals1 ~ residuals2)
+last_reg$coefficients
+```
+
+\
+
+Wow there all the same! You can see that we have reduced a multivariate regression $y_i = \beta_1x_i^1 + \beta_2x_i^2 + \varepsilon_i$ to an univariate one.\
+
+What happened is that we isole the variation of $x1$ that is orthogonal from $x2$. Put another way, when computing the residuals from regressing $x1$ on $x2$, we **keep only the variation of $x1$ that is unexplained by $x2$**. 
+
+# Why do we care about this theorem?
+
+First, I find it pretty fun to discover things like that, especially when the results are this precise. More seriously, this theorem, even if it seems very theoretical, has quite concrete applications: data visualization, computationnal speed and for specific inferences. As I am not particularly knowledgeable about this, I refer you to an article (check references at the end) which gives precise leads and sources. 
+
+# Proof of the theorem
+
+If you're still here it means that you are ready to go through the demonstration, which is not very funny. It's far from being a very difficult demonstration but I personnaly had to do it several times before fully understand what was happening. 
+
+### Before starting
+
+Before going any further, you might want to check an excellent article called *"Why Linear Regression is a Projection"* (see references). This article will give you the taste of why we can talk about linear regression with projections, very important for the following demonstration. 
+
+### Starting point
+
+We assume the following regression: $$y = X\hat\beta_1 + Z\hat\beta_2 + r$$
+
+Where:\
+- $y$ is the continuous variable we want to predict\
+- $X$ and $Z$ are our predictors (vector or matrix, no differences)\
+- $\hat\beta_1$ and $\hat\beta_2$ our estimation using least squared ordinary method\
+- $r$ the residuals of the estimation
+
+### Useful properties
+
+***Propertie 1:***\
+If there is no collinarity between our explanatory variables, the best fit to the least squares problem is unique.
+
+***Propertie 2:***\
+Any matrix of variables can be split in its projection. For our regression above, it means that we can re-write $Z = P_XZ + M_XZ$, where $P_X$ is the projection to $X$ and $M_X$ the *residual makers* for $X$. Also, we have: $M_X = I - P_X$.
+
+***Propertie 3:***\
+A regression on orthogonal sets of regressors can be done on each set at a time while still getting the coefficients from the joint regression.
+
+### A bit more about projection
+
+In order to go from $\hat{\beta} = (X^TX)^{-1}X^Ty$ into the projection $\hat{y}$, we only have to multiple it by $X$, which gives us: $$X\hat\beta = X(X^TX)^{-1}X^Ty = P_xy =\hat{y}$$
+$$P_x = X(X^TX)^{-1}X^T$$
+Now, let's say we have the two following estimations:
+$$y = X\hat{\beta_1} + Z\hat{\beta_2} + r_1$$
+$$M_Z y = M_Z X\hat{\beta_3} + r_2$$
+*where:* $$M_Z = I - P_Z = I - Z(Z^TZ)^{-1}Z^T = residual~makers$$
+
+
+What we want to prove with this theorem is that $\hat{\beta_1} = \hat{\beta_3}$.
+
+\
+
+### We re-write our first estimation by multiplying it by $M_Z$
+
+$$M_Z y = M_Z X\hat{\beta_1} + M_Z X\hat{\beta_2} + M_Z r_1$$
+
+With:\
+- $M_ZZ\hat{\beta_2} = (I - Z(Z^TZ)^{-1}Z^T)Z\hat{\beta_2} = Z\hat{\beta_2} - Z(Z^TZ)^{-1}Z^TZ\hat{\beta_2} = Z\hat{\beta_2} - Z\hat{\beta_2} = 0$\
+- $M_Zr_1 = (I - Z(Z^TZ)^{-1}Z^T)r_1 = r_1 - Z(Z^TZ)^{-1}Z^Tr_1 = r_1 - ZZ^{-1}(Z^T)^{-1} Z^Tr_1 = r_1 - 0 = r_1$\
+
+So we now have:
+$$M_Zy = M_ZX\hat{\beta_1} + r_1$$
+
+### We now multiply it by $X^T$
+
+$$X^TM_Zy = X^TM_ZX\hat{\beta_1} + X^Tr_1$$
+
+With:\
+$X^Tr_1 = X^T(y - X\hat{\beta_1} - Z\hat{\beta_2}) = X^Ty - X^T(X\hat{\beta_1} + Z\hat{\beta_2}) = X^Ty - X^Ty = 0$
+
+So we now have:
+$$X^TM_Zy = X^TM_ZX\hat{\beta_1}$$
+
+### We multiple the second estimation by $(M_ZX)^T$
+
+$$(M_ZX)^TM_Zy = X^TM_Z^TM_Zy =  X^TM_Z^T(M_Z X\hat{\beta_3} + r_2)$$
+$$= X^TM_Z^TM_ZX\hat{\beta_3} + X^TM_Z^Tr_2$$
+
+With:\
+$X^TM_Z^Tr_2 = X^TM_Z^T(M_Z y - M_Z X\hat{\beta_3}) = X^TM_Z^TM_Z (y - X\hat{\beta_3}) = 0$
+
+So we have:
+$$X^T M_Zy = X^T M_Z X \hat{\beta_3}$$
+
+### Finishing the proof
+
+We proved that $X^TM_Zy = X^TM_ZX\hat{\beta_1}$.\
+We also proved that $X^TM_Zy = X^TM_ZX\hat{\beta_3}$.\
+So we can conclude that $y = X_1\hat{\beta_1} = X_1\hat{\beta_3}$ and $\hat{\beta_1} = \hat{\beta_3}$.
+
+As you have seen, the demonstration goes in all directions and is not easy to follow if you don't do the calculations yourself. Although I don't think it's useful to master this demonstration (except in very special cases), I think it's good to manipulate the equations a little bit to improve your intuition. 
+
+I hope this has helped you if you are trying to understand this theorem better.
+
+# References
+
+*Why Linear Regression is a Projection* (2017), Vladimir Mikulik
+
+*Understanding the Frisch-Waugh-Lovell Theorem* (2022), Matteo Courthoud
+
+*Partial Time Regressions as Compared with Individual Trends* (1933), Ragnar Frisch and Frederick V. Waugh
+
+*Seasonal Adjustment of Economic Time Series and Multiple Regression Analysis* (1963), Michael Lovell
+
+
+
+
+
+
+

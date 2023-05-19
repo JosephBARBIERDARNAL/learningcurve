@@ -1,0 +1,68 @@
+---
+title: "Equivalence Pearson coefficient and OLS estimator"
+output: pdf_document
+---
+
+# Context
+
+When computing linear regression using the ordinary least squares (OLS) estimator between 2 variables, we are doing a correlation analysis, even if it's not explicited tough. However, it exists a very famous correlation measure: Pearson correlation coefficient.
+
+If you have already use both of these tools, you might have already tell yourself that they it feel like linear regression and correlation coefficient describe a similar thing. And that is completely true. In fact, there is an equivalence between Pearson correlation coefficient and the estimator of the OLS method, and it's very simple:
+
+If we assume the following regression model: $y = \beta_0 + \beta_1x + \varepsilon$, we have:
+$$\hat\beta_1 = cor(x,y) \times \frac{\sigma_y}{\sigma_x}$$
+
+# Example
+
+Let's see with a concrete example:
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+x = rnorm(n=100)
+y = 2*x + rnorm(100)
+cor(x,y)
+```
+
+This is the correlation between our variables. Now let's compute the coefficient from the regression:
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+reg = lm(y ~ x)
+reg$coefficients[2]
+```
+
+And this is what happen when we multiply it by the standard deviations quotient:
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+cor(x,y) * sd(y)/sd(x)
+```
+
+Nice they seem the same thing: it's because they are. But where does it come from? Let's see it in more detail.
+
+
+# Proof
+
+First, let's do the proof of the definition of the estimator that minimizes the sum squared error:
+$$\hat{y_i} = \hat{\beta_0} + \hat{\beta_1}x_i ~~and~~ r_i = y_i - \hat{\beta_0} - \hat{\beta_1}x$$
+$$Argmin_{\beta}~~Loss = L(y, x, \beta) = \sum_{1}^{n} r_i^2 = \sum_{1}^{n} (y - \beta_0 - \beta_1x)^2$$
+$$\frac{\partial L}{\partial \beta_0} = -2 \sum_{1}^{n} (y_i - \hat{\beta_0} - \hat{\beta_1}x_i) = 0$$
+$$\sum y_i = \sum_{1}^{n} \hat{\beta_0} + \sum_{1}^{n} \hat{\beta_1}x_i = n \hat{\beta_0} + \sum_{1}^{n}\hat{\beta_1}x_i$$
+$$\frac{1}{n} \sum_{1}^{n} y_i = \frac{1}{n}n\hat{\beta_0} + \frac{1}{n} \sum \hat{\beta_1}x_i$$
+$$\overline{y} = \hat{\beta_0} + \hat{\beta_1} \overline{x}$$
+$$\hat{\beta_0} = \overline{y} - \hat{\beta_1} \overline{x}$$
+
+We use this last result for the following:
+
+$$\frac{\partial L}{\partial \beta_1} = \frac{\partial \sum_{1}^{n} (y - \beta_0 - \beta_1x)^2}{\beta_1}$$
+
+$$= \frac{\partial \sum_{1}^{n} (y_i - (\overline{y}-\beta_1 \overline{x}) - \beta_1x_i)^2}{\beta_1} = 0$$
+$$= \frac{\partial \sum_{1}^{n} [(y_i - \overline{y})-\beta_1 (x_i - \overline{x})]^2}{\beta_1} = 0$$
+$$-2 \sum_{1}^{n}[(y_i - \overline{y}) - \hat{\beta_1}(x_i - \overline{x})]^2 = 0$$
+$$-2 \sum_{1}^{n} [(x_i - \overline{x}) ((y_i - \overline{y}) - \hat{\beta_1}(x_i - \overline{x}))] = 0 $$
+$$\sum_{1}^{n} (x_i - \overline{x})(y_i - \overline{y}) = \hat{\beta_1} \sum_{1}^{n} (x_i - \overline{x})^2$$
+$$\frac{1}{n} \sum_{1}^{n} (x_i - \overline{x})(y_i - \overline{y}) = \hat{\beta_1} \frac{1}{n} \sum_{1}^{n} (x_i - \overline{x})^2$$
+$$cov(x, y) = \hat{\beta_1} Var(x) <=> \hat{\beta_1} = \frac{cov(x,y)}{Var(x)}$$
+
+From this and with the fact that $Var(x) = \sigma_x^2$ and $cor(x,y) = \frac{cov(x,y)}{\sigma_x \sigma_y}$, we can re-write the latter:
+$$\hat{\beta_1} = \frac{cov(x,y)}{Var(x)} = \frac{cov(x,y)}{\sigma_x \sigma_x} = \frac{cov(x,y)}{\sigma_x \sigma_y} \frac{\sigma_y}{\sigma_x} = cor(x,y) \frac{\sigma_y}{\sigma_x}$$
+
+
+
+I hope that this post has shed some light on the relationship between the ordinary least squares estimator and the Pearson correlation coefficient and why they are in fact the same thing. 
+
+
