@@ -1,0 +1,186 @@
+---
+title: 'Python tutorial: How to use the OpenAI API?'
+author: "Learning Curve"
+output: pdf_document
+---
+
+# Things you can do with the OpenAI API
+
+In this tutorial, we will explore how to use the OpenAI API to perform various tasks using Python. The OpenAI API allows you to access powerful natural language processing models, such as ChatGPT, which can be used for a wide range of applications, including chatbots, language translation, text completion, and more.
+
+We'll look at just two different use cases: text completion and image generation, although it's possible to do much more. 
+
+### Prerequisites
+
+Before we begin, make sure you have the following prerequisites:
+
+- Python 3.6 or higher installed
+
+- OpenAI Python library (openai) installed. You can install it using pip:
+
+```bash
+pip install openai
+```
+
+# Libraries 
+
+```{r warning=FALSE, include=FALSE}
+library(reticulate)
+#py_install("openai")
+```
+
+```{python echo=TRUE, warning=FALSE}
+import openai #openAI api
+import requests #get content of the generated image
+import matplotlib.pyplot as plt #display generated image
+from PIL import Image #create an image object
+import io #make the image readable
+print("hello world")
+```
+
+# Define your API key
+
+Since the use of the API is not free, you have to create an OpenAI account and add a credit card. However, the text completion is cheap (0.002\$/1k token with GPT-3.5) and the image generation is ok if you don't abuse of it (0.02\$/image with DALLE). These values may change depending on the model you use.
+
+```{r echo=TRUE, message=FALSE, warning=FALSE}
+openai.api_key = "Your api key goes here"
+```
+
+
+```{python warning=FALSE, include=FALSE}
+openai.api_key = "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"
+```
+
+\newpage
+
+# Text completion with GPT-3.5
+
+\
+
+### Define parameters for the model
+
+They are mutliple parameters that you can modify when working with GPTs. It's important to know what they do in order to customize as much as possible the way the model should behave in your use case. The description below are from the API reference. I only put the less context-specific parameters here and let you check the documentation if you are looking for something in particular. 
+
+- `temperature` (between 0 and 2, default 1): What sampling temperature to use, between 0 and 2. Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.
+
+- `top_p` (between 0 and 1, default 1): An alternative to sampling with temperature, called nucleus sampling, where the model considers the results of the tokens with top_p probability mass. So 0.1 means only the tokens comprising the top 10% probability mass are considered.
+
+- `n` (default 1): How many chat completion choices to generate for each input message.
+
+- `presence_penalty` (between -2 and 2, default 0): Number between -2.0 and 2.0. Positive values penalize new tokens based on whether they appear in the text so far, increasing the model's likelihood to talk about new topics.
+
+- `frequency_penalty` (between -2 and 2, default 0): Number between -2.0 and 2.0. Positive values penalize new tokens based on their existing frequency in the text so far, decreasing the model's likelihood to repeat the same line verbatim.
+
+To get an idea of the importance of these parameters, I recommend you try out different combinations. Start with a simple, deterministic model, then modify it until the randomness is at its maximum. 
+
+NB: it is not recommended to set the `temperature` AND the `top_p` at the same time. 
+
+```{python echo=TRUE, warning=FALSE}
+#Define parameters for the model
+temperature = 1.5
+frequency_penalty = 0.5
+presence_penalty = 0.5
+model = "gpt-3.5-turbo" #you can choose another model
+```
+
+\
+
+### Define the inputs
+
+Now we want to define 2 different inputs. The `system_msg` must indicate how the model should behave. The `prompt` is just the message to which the model should *respond*. 
+
+```{python echo=TRUE, warning=FALSE}
+system_msg = """You're an AI assistant.
+              All your answers start with
+              'That is a good question my friend...'."""
+
+prompt = "What are the main ideas behind quantum physics?"
+
+messages=[{"role": "system","content": system_msg},
+          {"role": "user","content": prompt}]
+```
+
+\
+
+### Get the completion
+
+```{python echo=TRUE, warning=FALSE}
+#call API
+completion = openai.ChatCompletion.create(model=model,
+                             messages=messages,
+                             temperature=temperature,
+                             frequency_penalty=frequency_penalty,
+                             presence_penalty=presence_penalty)
+
+#get output
+output = completion["choices"][0]["message"]["content"]
+```
+
+
+```{python echo=FALSE, warning=FALSE}
+def add_line_break(string):
+    n = len(string) // 84  # Calculation of the number of "\n" to add
+    for i in range(n, 0, -1):  # Loop through the number of "\n" in descending order
+        position = i * 84  # Position to add the "\n"
+        string = string[:position] + "\n" + string[position:]  # Adding the "\n" at the position
+    return string
+output = add_line_break(output)
+print(f"Input: \n  {prompt}\n\n")
+print(f"Output: \n  {output}")
+```
+
+\newpage
+
+# Image generation with DALLE
+
+### Define prompt and parameters
+
+```{python echo=TRUE, warning=FALSE}
+#Define input
+prompt = "high-quality image of the cutest cat in the world"
+size = "1024x1024" #256x256, 512x512, or 1024x1024
+n = 2 #number of image to generate
+```
+
+### Get the images
+
+```{python echo=TRUE, warning=FALSE}
+#call API
+response = openai.Image.create(
+            prompt=prompt,
+            n=n,
+            size=size)
+
+#get first image
+image_url1 = response['data'][0]['url']
+image_data1 = requests.get(image_url1).content
+img1 = Image.open(io.BytesIO(image_data1))
+
+#get second image
+image_url2 = response['data'][1]['url']
+image_data2 = requests.get(image_url2).content
+img2 = Image.open(io.BytesIO(image_data2))
+```
+
+### Display the images
+
+```{python echo=FALSE, warning=FALSE}
+# Display the images side by side
+fig, axs = plt.subplots(1, 2)
+fig.suptitle(f"Prompt:\n {prompt}")
+
+# First image
+axs[0].imshow(img1)
+axs[0].axis('off')
+
+# Second image
+axs[1].imshow(img2)
+axs[1].axis('off')
+
+plt.show()
+```
+
+
+
+
+
